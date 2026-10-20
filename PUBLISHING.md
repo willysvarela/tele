@@ -2,12 +2,11 @@
 
 ## Before anything else
 
-1. **Apple Developer Program membership**: the paid account is w.llysvarela@gmail.com, a different
-   Apple ID from the one that first signed the app. The free Personal Team had registered
-   `com.willys.tele` and its App Group, which no other team may reuse, so the app now uses the
-   prefix `com.willysvarela` (`com.willysvarela.teleremote`, `com.willysvarela.teleremote.widget`,
-   `group.com.willysvarela.teleremote`). Never build for a device with the Personal Team selected
-   again, or these ids get stuck there too.
+1. **Apple Developer Program membership**: the paid team is a different Apple ID from the one that
+   first signed the app. The free Personal Team had registered the original bundle ids, which no other
+   team may reuse, so the app uses `com.willysvarela.teleremote`, `com.willysvarela.teleremote.widget`
+   and the App Group `group.com.willysvarela.teleremote`. Never build for a device with the Personal
+   Team selected again, or new ids get stuck there too.
 2. In Xcode > Settings > Accounts, pick the new team; put its team id in `Local.xcconfig`.
 3. In App Store Connect create the app: platform iOS, bundle id `com.willysvarela.teleremote`, SKU `tele`.
    Check the name is free; fallbacks: "Tele Remote", "Tele for Samsung TV".
@@ -36,8 +35,8 @@ The build number is managed by App Store Connect (`manageAppVersionAndBuildNumbe
 
 - **Name**: Tele. **Subtitle**: Remote for Samsung TVs.
 - **Category**: Utilities. **Age rating**: 4+. **Price**: free.
-- **Privacy policy URL**: publish `docs/privacy.md` (GitHub Pages on this repository works).
-- **Support URL**: publish `docs/support.md` the same way.
+- **Privacy policy URL**: https://willysvarela.github.io/tele/privacy
+- **Support URL**: https://willysvarela.github.io/tele/support
 - **App privacy**: "Data not collected".
 - **Keywords**: samsung,tv,remote,tizen,control,widget,launcher,smart tv
 - **Description**:

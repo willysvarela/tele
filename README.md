@@ -69,7 +69,7 @@ Layout: `Shared/` is compiled into both targets (TV client, config store, intent
 
 ## Publishing
 
-`docs/app-store.md` has the App Store steps; `./release.sh` archives and uploads;
+`PUBLISHING.md` has the App Store steps; `./release.sh` archives and uploads;
 `tools/screenshots.sh` renders store screenshots in demo mode.
 
 ## Notes

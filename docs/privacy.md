@@ -14,6 +14,6 @@ no analytics, no advertising and no tracking.
 **Permissions.** Tele asks for local network access so it can find and control your TV. It needs
 nothing else.
 
-**Contact.** Questions about this policy: open an issue on the project's GitHub repository.
+**Contact.** Questions about this policy: open an issue at https://github.com/willysvarela/tele/issues.
 
 _Last updated: October 2026._
