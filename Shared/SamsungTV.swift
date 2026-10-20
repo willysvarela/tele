@@ -50,6 +50,12 @@ final class SamsungTV: NSObject, URLSessionDelegate, URLSessionWebSocketDelegate
             let modelName: String
             let wifiMac: String?
             let PowerState: String?
+
+            /// The TV escapes its name as HTML ("55&quot; Crystal UHD").
+            var displayName: String {
+                [("&quot;", "\""), ("&amp;", "&"), ("&#39;", "'"), ("&lt;", "<"), ("&gt;", ">")]
+                    .reduce(name) { $0.replacingOccurrences(of: $1.0, with: $1.1) }
+            }
         }
         let device: Device
         var isOn: Bool { device.PowerState == "on" }

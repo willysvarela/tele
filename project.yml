@@ -27,6 +27,7 @@ targets:
       properties:
         CFBundleDisplayName: Tele
         UILaunchScreen: {}
+        TeleDefaultHost: $(TELE_DEFAULT_HOST)
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSLocalNetworkUsageDescription: Tele talks to your Samsung TV over the local network.
         NSAppTransportSecurity:

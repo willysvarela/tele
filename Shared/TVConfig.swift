@@ -30,6 +30,13 @@ enum TVStore {
         return TVConfig()
     }
 
+    /// What the setup screen pre-fills: `TeleDefaultHost` from Info.plist (TELE_DEFAULT_HOST in Local.xcconfig),
+    /// otherwise the phone's own subnet so only the last number is left to type.
+    static var suggestedHost: String {
+        if let host = Bundle.main.object(forInfoDictionaryKey: "TeleDefaultHost") as? String, !host.isEmpty { return host }
+        return TVDiscovery.wifiAddress()?.prefix ?? ""
+    }
+
     static func save(_ config: TVConfig) {
         if let data = try? JSONEncoder().encode(config) { defaults.set(data, forKey: key) }
     }

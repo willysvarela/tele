@@ -49,7 +49,9 @@ reinstalled from Xcode every 7 days).
    Developer Mode* if asked. After the first cable run Xcode can install over Wi-Fi.
 4. Pick the iPhone in the scheme bar and press Run. On the phone, allow the app under
    *Settings > General > VPN & Device Management* the first time, then open it.
-5. Accept the *Local Network* prompt, enter the TV's IP, and accept "Allow Tele" on the TV.
+5. Accept the *Local Network* prompt, tap your TV in the list (Tele scans the Wi-Fi subnet for
+   Samsung TVs on port 8001; the IP can also be typed), and accept "Allow Tele" on the TV.
+   `TELE_DEFAULT_HOST` in `Local.xcconfig` pre-fills the address field.
 
 The widget comes with the app: long-press the Home Screen, add *Tele*. Controls appear in the
 Control Center editor under *Tele*.

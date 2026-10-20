@@ -11,7 +11,7 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active: Task { await model.connect() }
-            case .background: model.disconnect()
+            case .background: if model.state != .pairing { model.disconnect() }
             default: break
             }
         }
@@ -22,36 +22,102 @@ struct ContentView: View {
 
 struct SetupView: View {
     @EnvironmentObject private var model: RemoteModel
-    @State private var host = ""
+    @State private var host = TVStore.suggestedHost
+    @State private var found: [DiscoveredTV] = []
+    @State private var scanning = false
+    @State private var scanned = false
+
+    private var busy: Bool { model.state == .connecting || model.state == .pairing }
 
     var body: some View {
-        VStack(spacing: 28) {
-            Spacer()
-            Image(systemName: "tv").font(.system(size: 64, weight: .light))
-            Text("Tele").font(.largeTitle.weight(.semibold))
-            Text("Enter your Samsung TV's IP address. The TV will ask you to allow Tele once.")
-                .multilineTextAlignment(.center).foregroundStyle(.secondary).padding(.horizontal, 32)
-            TextField("192.168.1.50", text: $host)
-                .keyboardType(.decimalPad)
-                .textFieldStyle(.roundedBorder)
-                .multilineTextAlignment(.center)
-                .font(.title3.monospacedDigit())
-                .padding(.horizontal, 48)
-            Button {
-                Task { await model.setup(host: host) }
-            } label: {
-                Group {
-                    if model.state == .connecting || model.state == .pairing { ProgressView().tint(.black) } else { Text("Connect") }
+        ScrollView {
+            VStack(spacing: 22) {
+                Image(systemName: "tv").font(.system(size: 56, weight: .light)).padding(.top, 56)
+                Text("Tele").font(.largeTitle.weight(.semibold))
+                Text("Pick your Samsung TV. It will ask you to allow Tele once.")
+                    .multilineTextAlignment(.center).foregroundStyle(.secondary).padding(.horizontal, 32)
+
+                VStack(spacing: 10) {
+                    ForEach(found) { tv in
+                        Button {
+                            host = tv.host
+                            Task { await model.setup(host: tv.host) }
+                        } label: {
+                            HStack(spacing: 14) {
+                                Image(systemName: "tv").font(.title2)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(tv.name).font(.headline)
+                                    Text("\(tv.model)   \(tv.host)").font(.footnote).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if busy && model.config.host == tv.host { ProgressView() }
+                                else { Image(systemName: "chevron.right").foregroundStyle(.tertiary) }
+                            }
+                            .padding(14)
+                            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(busy)
+                    }
+                    HStack(spacing: 8) {
+                        if scanning { ProgressView().controlSize(.small) }
+                        Text(scanning ? "Looking for TVs on your Wi-Fi…"
+                             : found.isEmpty && scanned ? "No TV answered. Is it on and on this Wi-Fi?" : "")
+                            .font(.footnote).foregroundStyle(.secondary)
+                        Spacer()
+                        if !scanning { Button("Scan again") { Task { await scan() } }.font(.footnote) }
+                    }
+                    .padding(.horizontal, 4)
                 }
-                .frame(maxWidth: .infinity).padding(.vertical, 12)
+                .padding(.horizontal, 24)
+
+                Text("Or type the TV's IP address").font(.footnote).foregroundStyle(.secondary).padding(.top, 8)
+                TextField("192.168.1.50", text: $host)
+                    .keyboardType(.numbersAndPunctuation)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .submitLabel(.go)
+                    .onSubmit { connect() }
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+                    .font(.title3.monospacedDigit())
+                    .padding(.horizontal, 48)
+                Button {
+                    connect()
+                } label: {
+                    Group {
+                        if busy { ProgressView().tint(.black) } else { Text("Connect") }
+                    }
+                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                }
+                .buttonStyle(.borderedProminent).tint(.white).foregroundStyle(.black)
+                .padding(.horizontal, 48)
+                .disabled(host.isEmpty || host.hasSuffix(".") || busy)
+                if case .failed(let message) = model.state { Text(message).foregroundStyle(.red).font(.footnote) }
+                if model.state == .pairing { Text("Look at the TV and choose Allow.").font(.footnote).foregroundStyle(.secondary) }
             }
-            .buttonStyle(.borderedProminent).tint(.white).foregroundStyle(.black)
-            .padding(.horizontal, 48)
-            .disabled(host.isEmpty || model.state == .connecting || model.state == .pairing)
-            if case .failed(let message) = model.state { Text(message).foregroundStyle(.red).font(.footnote) }
-            if model.state == .pairing { Text("Look at the TV and choose Allow.").font(.footnote).foregroundStyle(.secondary) }
-            Spacer()
+            .padding(.bottom, 32)
         }
+        .scrollDismissesKeyboard(.interactively)
+        .task { await scan() }
+    }
+
+    private func connect() {
+        Task { await model.setup(host: host) }
+    }
+
+    private func scan() async {
+        guard !scanning else { return }
+        scanning = true
+        found = []
+        _ = await TVDiscovery.scan { tv in
+            Task { @MainActor in
+                if !found.contains(tv) { found.append(tv) }
+                if host.isEmpty || host.hasSuffix(".") { host = tv.host }
+            }
+        }
+        scanning = false
+        scanned = true
     }
 }
 

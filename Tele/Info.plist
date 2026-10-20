@@ -27,6 +27,8 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Tele talks to your Samsung TV over the local network.</string>
+	<key>TeleDefaultHost</key>
+	<string>$(TELE_DEFAULT_HOST)</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
