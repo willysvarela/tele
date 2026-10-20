@@ -16,4 +16,4 @@ Expert Settings). Some TVs on Wi-Fi only wake within a few minutes of being turn
 **An app tile does nothing.** The app is not installed on that TV, or the TV uses a different app
 id. Open an issue with the TV model.
 
-**Contact.** Open an issue on the project's GitHub repository.
+**Contact.** Open an issue at https://github.com/willysvarela/tele/issues.
