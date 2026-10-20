@@ -66,6 +66,11 @@ Layout: `Shared/` is compiled into both targets (TV client, config store, intent
 `tools/icon.html`; render it with headless Chrome at 1024x1024 into
 `Tele/Assets.xcassets/AppIcon.appiconset/icon.png`.
 
+## Publishing
+
+`docs/app-store.md` has the App Store steps; `./release.sh` archives and uploads;
+`tools/screenshots.sh` renders store screenshots in demo mode.
+
 ## Notes
 
 - The token is the TV's pairing secret for this phone. It lives in the App Group's UserDefaults,

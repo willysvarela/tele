@@ -34,7 +34,12 @@ enum TVStore {
             return [one]
         }
         #if DEBUG
-        // Simulator convenience: SIMCTL_CHILD_TELE_HOST=<ip> stands in for a stored TV.
+        // Simulator conveniences: SIMCTL_CHILD_TELE_HOST=<ip> stands in for a stored TV, and
+        // SIMCTL_CHILD_TELE_DEMO=1 shows sample TVs with no network at all (store screenshots).
+        if ProcessInfo.processInfo.environment["TELE_DEMO"] != nil {
+            return [TVConfig(host: "192.168.1.20", name: "Living room", model: "QN65S90D", mac: "00:00:00:00:00:01"),
+                    TVConfig(host: "192.168.1.21", name: "Bedroom", model: "UN43DU7700", mac: "00:00:00:00:00:02")]
+        }
         if let host = ProcessInfo.processInfo.environment["TELE_HOST"], !host.isEmpty {
             return [TVConfig(host: host, name: "Samsung TV")]
         }

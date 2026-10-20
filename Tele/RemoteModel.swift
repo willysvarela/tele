@@ -82,6 +82,11 @@ final class RemoteModel: ObservableObject {
 
     func connect() async {
         guard config.isConfigured else { return }
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["TELE_DEMO"] != nil {        // store screenshots: look connected
+            state = .ready; isOn = true; hasLauncher = true; return
+        }
+        #endif
         if tv != nil, state == .ready { return }
         if let inFlight = connecting { await inFlight.value; return }
         let task = Task { await openChannel() }

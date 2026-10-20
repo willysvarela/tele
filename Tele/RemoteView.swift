@@ -7,7 +7,7 @@ import SwiftUI
 struct RemoteView: View {
     @EnvironmentObject private var model: RemoteModel
     @State private var showSettings = false
-    @State private var showDevices = false
+    @State private var showDevices = ProcessInfo.processInfo.environment["TELE_DEMO"] == "devices"
 
     var body: some View {
         VStack(spacing: 0) {
