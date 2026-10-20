@@ -190,6 +190,33 @@ commands.availabilityState = async () => {
   console.log('availableInNewTerritories', r.data.attributes.availableInNewTerritories, 'available territories', (r.included ?? []).filter(t => t.attributes.available).length);
 };
 
+commands.reviewContact = async () => {
+  const r = await app(); const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
+  const d = (await api('GET', `/v1/appStoreVersions/${ver.id}/appStoreReviewDetail`)).data;
+  const a = d.attributes;
+  console.log('contact', a.contactFirstName, a.contactLastName, '| email set:', !!a.contactEmail, '| phone set:', !!a.contactPhone);
+};
+
+commands.prices = async (territory = 'USA') => {
+  const a = (await app()).data[0];
+  const r = await api('GET', `/v1/apps/${a.id}/appPricePoints?filter[territory]=${territory}&limit=12`);
+  console.log(r.data.map(p => p.attributes.customerPrice).join('  '));
+  const sched = await api('GET', `/v1/apps/${a.id}/appPriceSchedule/manualPrices?include=appPricePoint`).catch(() => null);
+  if (sched) console.log('current price:', (sched.included ?? []).map(p => p.attributes.customerPrice).join(', ') || 'none');
+};
+
+commands.setPrice = async (customerPrice, territory = 'USA') => {
+  const a = (await app()).data[0];
+  let url = `/v1/apps/${a.id}/appPricePoints?filter[territory]=${territory}&limit=200`, point;
+  while (url && !point) { const r = await api('GET', url); point = r.data.find(p => p.attributes.customerPrice === customerPrice); url = r.links?.next; }
+  if (!point) throw new Error('no price point ' + customerPrice);
+  await api('POST', '/v1/appPriceSchedules', { data: { type: 'appPriceSchedules',
+    relationships: { app: { data: { type: 'apps', id: a.id } }, baseTerritory: { data: { type: 'territories', id: territory } },
+      manualPrices: { data: [{ type: 'appPrices', id: '${p}' }] } } },
+    included: [{ type: 'appPrices', id: '${p}', attributes: { startDate: null }, relationships: { appPricePoint: { data: { type: 'appPricePoints', id: point.id } } } }] });
+  console.log('price set to', customerPrice, territory, '(other territories follow Apple\'s equalisation)');
+};
+
 commands.contact = async (first, last, email, phone) => {
   const r = await app(); const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
   const d = (await api('GET', `/v1/appStoreVersions/${ver.id}/appStoreReviewDetail`)).data;
