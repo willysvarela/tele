@@ -1,0 +1,15 @@
+{
+  "versionString": "1.0.0",
+  "copyright": "2026 Willys Varela",
+  "primaryCategory": "UTILITIES",
+  "subtitle": "Remote for Samsung TVs",
+  "privacyPolicyUrl": "https://willysvarela.github.io/tele/privacy",
+  "supportUrl": "https://willysvarela.github.io/tele/support",
+  "marketingUrl": "https://willysvarela.github.io/tele/",
+  "keywords": "samsung,tv,remote,tizen,control,widget,launcher,smart tv,television",
+  "promotionalText": "A fast remote for your Samsung TV, with a widget and Control Center buttons. No account, no cloud.",
+  "description": "A fast remote for your Samsung TV that stays out of the way.\n\nTele finds your TV on the Wi-Fi, asks the TV to allow it once, and from then on every key is instant: a navigation disc with OK under your thumb, volume and channel rockers at the sides, playback keys, a keypad for channel numbers and PINs, and one-tap tiles for Netflix, YouTube, Prime Video, Disney+, HBO Max, Apple TV and Spotify. Hold an arrow or volume to repeat.\n\nAdd the Home Screen widget for power, mute, volume and your apps without opening the app, put TV power and mute in Control Center, and ask Siri or Shortcuts to mute the TV or open an app.\n\nSeveral TVs? Add them all and pick the default. No account, no cloud, nothing leaves your home network.\n\nWorks with Samsung TVs running Tizen (2016 and later) on the same Wi-Fi as your iPhone.",
+  "reviewNotes": "Tele controls Samsung Tizen TVs over the local network only (Samsung's remote WebSocket on port 8002, its REST API on port 8001 and Wake-on-LAN). It needs a Samsung TV on the same Wi-Fi to do anything, and there is no account or sign-in. If no Samsung TV is available for review: on first launch the app scans the Wi-Fi and lists Samsung TVs; choosing one makes the TV display an 'Allow Tele?' prompt, and after accepting, every key on the remote screen, the app tiles and the widget act on the TV. The app collects no data and never contacts a server outside the local network.",
+  "screenshots": ["build/screenshots/1-remote.png", "build/screenshots/2-devices.png"],
+  "screenshotDisplayType": "APP_IPHONE_67"
+}
