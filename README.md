@@ -6,9 +6,12 @@ Companion to the [tizen-launcher](https://github.com/willysvarela/tizen-launcher
 
 ## What it does
 
-- **Remote**: power, Home, Back, Source, D-pad with OK, volume and channel, mute, transport keys,
-  and one-tap app launch (Launcher, Netflix, YouTube, Prime Video, Disney+, HBO Max, Spotify,
-  Globoplay). Keys go over the TV's remote channel, so there is no cloud and no account.
+- **Remote**: a fixed, non-scrolling instrument. All apps in a grid at the top (Launcher, Netflix,
+  YouTube, Prime Video, Disney+, HBO Max, Spotify, Globoplay), playback and Back/Home/Source in the
+  middle, and in the thumb's reach at the bottom a navigation disc with OK, flanked by volume and
+  channel rockers whose middle press mutes or opens the guide. Keys fire on touch-down and arrows
+  and volume repeat while held. Keys go over the TV's remote channel, so there is no cloud and no
+  account.
 - **Widget** (small and medium): power, mute, volume, play, and app shortcuts that work without
   opening the app. The dot shows whether the TV is on.
 - **Control Center** (iOS 18): TV power, Mute, Open launcher.
