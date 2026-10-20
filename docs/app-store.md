@@ -2,14 +2,14 @@
 
 ## Before anything else
 
-1. **Join the Apple Developer Program** (paid). Enrol with the same Apple ID that is signed in to
-   Xcode so the bundle ids `com.willys.tele` / `com.willys.tele.widget` and the App Group
-   `group.com.willys.tele` carry over from the Personal Team. If you enrol with a different Apple ID,
-   change `bundleIdPrefix` in `project.yml` (and the App Group name in `project.yml` and
-   `Shared/TVConfig.swift`) before the first archive, because an App ID registered on a Personal Team
-   cannot be moved.
+1. **Apple Developer Program membership**: the paid account is w.llysvarela@gmail.com, a different
+   Apple ID from the one that first signed the app. The free Personal Team had registered
+   `com.willys.tele` and its App Group, which no other team may reuse, so the app now uses the
+   prefix `com.willysvarela` (`com.willysvarela.tele`, `com.willysvarela.tele.widget`,
+   `group.com.willysvarela.tele`). Never build for a device with the Personal Team selected
+   again, or these ids get stuck there too.
 2. In Xcode > Settings > Accounts, pick the new team; put its team id in `Local.xcconfig`.
-3. In App Store Connect create the app: platform iOS, bundle id `com.willys.tele`, SKU `tele`.
+3. In App Store Connect create the app: platform iOS, bundle id `com.willysvarela.tele`, SKU `tele`.
    Check the name is free; fallbacks: "Tele Remote", "Tele for Samsung TV".
 
 ## Build and upload

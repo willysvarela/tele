@@ -1,6 +1,6 @@
 name: Tele
 options:
-  bundleIdPrefix: com.willys
+  bundleIdPrefix: com.willysvarela
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
@@ -41,10 +41,10 @@ targets:
     entitlements:
       path: Tele/Tele.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.willys.tele]
+        com.apple.security.application-groups: [group.com.willysvarela.tele]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.willys.tele
+        PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.tele
     dependencies:
       - target: TeleWidget
         embed: true
@@ -69,8 +69,8 @@ targets:
     entitlements:
       path: TeleWidget/TeleWidget.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.willys.tele]
+        com.apple.security.application-groups: [group.com.willysvarela.tele]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.willys.tele.widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.tele.widget
         SKIP_INSTALL: true
