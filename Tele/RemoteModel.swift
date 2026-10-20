@@ -144,6 +144,11 @@ final class RemoteModel: ObservableObject {
         Task { await run { tv in try await tv.open(app) } }
     }
 
+    func backspace() {
+        haptic()
+        Task { await run { tv in try await tv.backspace() } }
+    }
+
     /// Home opens the Tele launcher when the TV has it, otherwise the TV's own Home screen.
     func home() {
         haptic()

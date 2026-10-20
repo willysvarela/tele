@@ -9,6 +9,10 @@ enum RemoteKey: String, AppEnum {
     case channelUp = "KEY_CHUP", channelDown = "KEY_CHDOWN"
     case play = "KEY_PLAY", pause = "KEY_PAUSE", stop = "KEY_STOP", rewind = "KEY_REWIND", fastForward = "KEY_FF"
     case source = "KEY_SOURCE", menu = "KEY_MENU", guide = "KEY_GUIDE", info = "KEY_INFO"
+    case zero = "KEY_0", one = "KEY_1", two = "KEY_2", three = "KEY_3", four = "KEY_4"
+    case five = "KEY_5", six = "KEY_6", seven = "KEY_7", eight = "KEY_8", nine = "KEY_9", clear = "KEY_CLEAR"
+
+    static let digits: [RemoteKey] = [.zero, .one, .two, .three, .four, .five, .six, .seven, .eight, .nine]
 
     static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "TV key")
     static var caseDisplayRepresentations: [RemoteKey: DisplayRepresentation] = [
@@ -17,6 +21,8 @@ enum RemoteKey: String, AppEnum {
         .volumeUp: "Volume up", .volumeDown: "Volume down", .mute: "Mute",
         .channelUp: "Channel up", .channelDown: "Channel down",
         .play: "Play", .pause: "Pause", .stop: "Stop", .rewind: "Rewind", .fastForward: "Fast forward",
+        .zero: "0", .one: "1", .two: "2", .three: "3", .four: "4", .five: "5", .six: "6", .seven: "7",
+        .eight: "8", .nine: "9", .clear: "Clear",
         .source: "Source", .menu: "Menu", .guide: "Guide", .info: "Info"
     ]
 }

@@ -8,6 +8,7 @@ struct RemoteView: View {
     @EnvironmentObject private var model: RemoteModel
     @State private var showSettings = false
     @State private var showDevices = ProcessInfo.processInfo.environment["TELE_DEMO"] == "devices"
+    @State private var showKeypad = ProcessInfo.processInfo.environment["TELE_DEMO"] == "keypad"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,6 +23,9 @@ struct RemoteView: View {
         .background(Palette.canvas.ignoresSafeArea())
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(isPresented: $showDevices) { DevicesView() }
+        .sheet(isPresented: $showKeypad) {
+            KeypadView().presentationDetents([.height(470)]).presentationDragIndicator(.visible)
+        }
         .task { await model.connect() }
     }
 
@@ -92,6 +96,7 @@ struct RemoteView: View {
             RoundKey("arrow.uturn.backward", label: "Back") { model.press(.back) }
             RoundKey("house.fill", label: "Home") { model.home() }
             RoundKey("rectangle.inset.filled.and.person.filled", label: "Source") { model.press(.source) }
+            RoundKey("number", label: "Keypad", fire: .up) { showKeypad = true }
         }
     }
 
@@ -107,6 +112,57 @@ struct RemoteView: View {
             Rocker(top: KeyAction("chevron.up", "Channel up") { model.press(.channelUp) },
                    middle: KeyAction("list.bullet.rectangle.fill", "Guide") { model.press(.guide) },
                    bottom: KeyAction("chevron.down", "Channel down") { model.press(.channelDown) })
+        }
+    }
+}
+
+// MARK: - Keypad
+
+/// Digits, OK and delete for channel numbers, PINs and text fields on the TV.
+struct KeypadView: View {
+    @EnvironmentObject private var model: RemoteModel
+    private let rows: [[RemoteKey]] = [[.one, .two, .three], [.four, .five, .six], [.seven, .eight, .nine]]
+
+    var body: some View {
+        VStack(spacing: 14) {
+            ForEach(rows, id: \.self) { row in
+                HStack(spacing: 18) { ForEach(row, id: \.self) { key in digit(key) } }
+            }
+            HStack(spacing: 18) {
+                Key(label: "Delete", action: { model.backspace() }) { pressed in
+                    Image(systemName: "delete.left.fill")
+                        .font(.system(size: 24, weight: .semibold)).foregroundStyle(Palette.ink)
+                        .frame(width: 76, height: 76)
+                        .background(KeyFace(pressed: pressed, shape: Circle()))
+                        .contentShape(Circle())
+                        .scaleEffect(pressed ? 0.94 : 1).animation(.easeOut(duration: 0.1), value: pressed)
+                }
+                digit(.zero)
+                Key(label: "OK", action: { model.press(.ok) }) { pressed in
+                    Text("OK").font(.system(size: 22, weight: .bold, design: .rounded)).foregroundStyle(.black)
+                        .frame(width: 76, height: 76)
+                        .background(Circle().fill(pressed ? Color(white: 0.84) : .white))
+                        .contentShape(Circle())
+                        .scaleEffect(pressed ? 0.94 : 1).animation(.easeOut(duration: 0.1), value: pressed)
+                }
+            }
+            Text("Delete removes the last character while the TV's keyboard is open.")
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                .padding(.top, 6).padding(.horizontal, 32)
+        }
+        .padding(.top, 28)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Palette.canvas.ignoresSafeArea())
+    }
+
+    private func digit(_ key: RemoteKey) -> some View {
+        Key(label: key.rawValue.replacingOccurrences(of: "KEY_", with: ""), action: { model.press(key) }) { pressed in
+            Text(key.rawValue.replacingOccurrences(of: "KEY_", with: ""))
+                .font(.system(size: 32, weight: .medium, design: .rounded)).foregroundStyle(Palette.ink)
+                .frame(width: 76, height: 76)
+                .background(KeyFace(pressed: pressed, shape: Circle()))
+                .contentShape(Circle())
+                .scaleEffect(pressed ? 0.94 : 1).animation(.easeOut(duration: 0.1), value: pressed)
         }
     }
 }

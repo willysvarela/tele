@@ -11,7 +11,8 @@ Companion to the [tizen-launcher](https://github.com/willysvarela/tizen-launcher
   and in the thumb's reach at the bottom a navigation disc with OK, flanked by volume and channel
   rockers whose middle press mutes or opens the guide. Keys fire on touch-down and arrows and
   volume repeat while held. Home opens the Tele launcher when the TV has it, otherwise the TV's own
-  Home screen. Keys go over the TV's remote channel, so there is no cloud and no account.
+  Home screen. A keypad sheet types digits, OK and delete (delete rewrites the TV's text field
+  without its last character while the TV keyboard is open; otherwise it sends the clear key). Keys go over the TV's remote channel, so there is no cloud and no account.
 - **Several TVs**: tap the TV name to switch, add or remove TVs and choose the default one, which
   the app opens on and the widget, Control Center and Shortcuts act on.
 - **Widget** (small and medium): power, mute, volume, play, and app shortcuts that work without

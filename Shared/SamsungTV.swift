@@ -22,6 +22,9 @@ final class SamsungTV: NSObject, URLSessionDelegate, URLSessionWebSocketDelegate
     let host: String
     private(set) var token: String
     private var channel: URLSessionWebSocketTask?
+    private var listener: Task<Void, Never>?
+    /// Text in the TV's focused field while its on-screen keyboard is up (the TV mirrors it over the channel).
+    @MainActor private(set) var imeText: String?
     private lazy var session = URLSession(configuration: .ephemeral, delegate: self, delegateQueue: nil)
 
     init(host: String, token: String = "") {
@@ -129,6 +132,7 @@ final class SamsungTV: NSObject, URLSessionDelegate, URLSessionWebSocketDelegate
         do {
             let newToken = try await withTimeout(timeout) { try await self.awaitConnect(task) }
             if !newToken.isEmpty { token = newToken }
+            listen(on: task)
             return token
         } catch {
             disconnect()
@@ -156,8 +160,47 @@ final class SamsungTV: NSObject, URLSessionDelegate, URLSessionWebSocketDelegate
     }
 
     func disconnect() {
+        listener?.cancel()
+        listener = nil
         channel?.cancel(with: .normalClosure, reason: nil)
         channel = nil
+    }
+
+    /// Follows the TV's keyboard: ms.remote.imeStart / imeUpdate (base64 text) / imeEnd.
+    private func listen(on task: URLSessionWebSocketTask) {
+        listener = Task { [weak self] in
+            while !Task.isCancelled, let message = try? await task.receive() {
+                guard case .string(let text) = message,
+                      let json = try? JSONSerialization.jsonObject(with: Data(text.utf8)) as? [String: Any],
+                      let event = json["event"] as? String else { continue }
+                let update: String?? = switch event {
+                case "ms.remote.imeStart": .some("")
+                case "ms.remote.imeUpdate":
+                    .some((json["data"] as? String).flatMap { Data(base64Encoded: $0) }.map { String(decoding: $0, as: UTF8.self) } ?? "")
+                case "ms.remote.imeEnd": .some(nil)
+                default: nil
+                }
+                if let update { await MainActor.run { self?.imeText = update } }
+            }
+        }
+    }
+
+    /// Replaces the text in the TV's focused field.
+    func sendText(_ text: String) async throws {
+        try await sendJSON([
+            "method": "ms.remote.control",
+            "params": ["Cmd": Data(text.utf8).base64EncodedString(), "DataOfCmd": "base64", "TypeOfRemote": "SendInputString"]
+        ])
+        await MainActor.run { imeText = text }
+    }
+
+    /// Removes the last character in the TV's text field; with no field open, sends the clear key.
+    func backspace() async throws {
+        if let text = await imeText, !text.isEmpty {
+            try await sendText(String(text.dropLast()))
+        } else {
+            try await press(RemoteKey.clear.rawValue)
+        }
     }
 
     private func sendJSON(_ object: [String: Any]) async throws {
