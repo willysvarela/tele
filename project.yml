@@ -1,0 +1,63 @@
+name: Tele
+options:
+  bundleIdPrefix: com.willys
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    TARGETED_DEVICE_FAMILY: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+targets:
+  Tele:
+    type: application
+    platform: iOS
+    sources:
+      - path: Tele
+      - path: Shared
+    info:
+      path: Tele/Info.plist
+      properties:
+        CFBundleDisplayName: Tele
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSLocalNetworkUsageDescription: Tele talks to your Samsung TV over the local network.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    entitlements:
+      path: Tele/Tele.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.willys.tele]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.willys.tele
+    dependencies:
+      - target: TeleWidget
+        embed: true
+  TeleWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: TeleWidget
+      - path: Shared
+    info:
+      path: TeleWidget/Info.plist
+      properties:
+        CFBundleDisplayName: Tele
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        NSLocalNetworkUsageDescription: Tele talks to your Samsung TV over the local network.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    entitlements:
+      path: TeleWidget/TeleWidget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.willys.tele]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.willys.tele.widget
+        SKIP_INSTALL: true

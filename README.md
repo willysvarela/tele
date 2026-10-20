@@ -1,0 +1,51 @@
+# Tele
+
+An iPhone remote for a Samsung Tizen TV that gets out of the way: a clean remote screen, a Home
+Screen widget with power, volume and your apps, Control Center buttons, and Shortcuts actions.
+Companion to the [tizen-launcher](https://github.com/willysvarela/tizen-launcher) home screen.
+
+## What it does
+
+- **Remote**: power, Home, Back, Source, D-pad with OK, volume and channel, mute, transport keys,
+  and one-tap app launch (Launcher, Netflix, YouTube, Prime Video, Disney+, HBO Max, Spotify,
+  Globoplay). Keys go over the TV's remote channel, so there is no cloud and no account.
+- **Widget** (small and medium): power, mute, volume, play, and app shortcuts that work without
+  opening the app. The dot shows whether the TV is on.
+- **Control Center** (iOS 18): TV power, Mute, Open launcher.
+- **Shortcuts / Siri**: "Toggle the TV", "Mute the TV", "Open the launcher", plus a generic
+  "Press TV key" and "Open app on TV" action.
+- **Power**: KEY_POWER when the TV is on, Wake-on-LAN to the TV's address when it is in standby
+  (enable *Power On with Mobile* on the TV).
+
+## How it talks to the TV
+
+| Port | Protocol | Used for |
+| ---- | -------- | -------- |
+| 8001 | REST `/api/v2/` | TV name, model, MAC, power state; app launch fallback |
+| 8002 | WebSocket (TLS, self-signed) | remote keys, app launch (`ed.apps.launch`) |
+| 8080 | DIAL | title deep links (`m=<netflix id>`, `v=<youtube id>`) |
+| 9    | UDP | Wake-on-LAN magic packet |
+
+The first connection makes the TV show "Allow Tele?". Accepting returns a token that is stored in
+the App Group so the widget and Control Center can act on their own.
+
+## Build
+
+```
+brew install xcodegen
+./generate.sh open      # writes Tele.xcodeproj and opens it
+```
+
+In Xcode pick your team under *Signing & Capabilities* for both targets (Tele and TeleWidget);
+the App Group `group.com.willys.tele` is created on first signing. Run on an iPhone on the same
+Wi-Fi as the TV, enter the TV's IP, and accept the prompt on the TV.
+
+Layout: `Shared/` is compiled into both targets (TV client, config store, intents),
+`Tele/` is the app, `TeleWidget/` the widget and controls.
+
+## Notes
+
+- The token is the TV's pairing secret for this phone. It lives in the App Group's UserDefaults,
+  which the widget needs; it is not synced anywhere.
+- Broadcast Wake-on-LAN needs Apple's multicast entitlement, so the packet is also sent directly
+  to the TV's last address, which Samsung TVs in network standby answer.
