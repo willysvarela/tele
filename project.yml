@@ -34,7 +34,9 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         TeleDefaultHost: $(TELE_DEFAULT_HOST)
-        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # App Store validation wants all four even for iPhone-only apps; AppDelegate locks portrait at run time.
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown,
+                                           UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         NSLocalNetworkUsageDescription: Tele talks to your Samsung TV over the local network.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
