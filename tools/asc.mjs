@@ -26,7 +26,10 @@ export async function api(method, path, body) {
   });
   const text = await res.text();
   const json = text ? JSON.parse(text) : {};
-  if (!res.ok) throw new Error(`${method} ${path} -> ${res.status}: ${JSON.stringify(json.errors ?? json).slice(0, 700)}`);
+  if (!res.ok) {
+    const assoc = json.errors?.flatMap(e => Object.entries(e.meta?.associatedErrors ?? {}).flatMap(([k, v]) => v.map(x => `${k}: ${x.title} ${x.detail ?? ''}`))) ?? [];
+    throw new Error(`${method} ${path} -> ${res.status}: ${json.errors?.map(e => e.title + (e.detail ? ' ' + e.detail : '')).join(' | ')}${assoc.length ? '\n  - ' + assoc.join('\n  - ') : ''}`);
+  }
   return json;
 }
 
@@ -227,8 +230,10 @@ commands.contact = async (first, last, email, phone) => {
 
 commands.submit = async () => {
   const r = await app(); const a = r.data[0]; const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
-  const sub = (await api('POST', '/v1/reviewSubmissions', { data: { type: 'reviewSubmissions', attributes: { platform: 'IOS' }, relationships: { app: { data: { type: 'apps', id: a.id } } } } })).data;
-  await api('POST', '/v1/reviewSubmissionItems', { data: { type: 'reviewSubmissionItems', relationships: { reviewSubmission: { data: { type: 'reviewSubmissions', id: sub.id } }, appStoreVersion: { data: { type: 'appStoreVersions', id: ver.id } } } } });
+  const open = (await api('GET', `/v1/apps/${a.id}/reviewSubmissions?filter[state]=READY_FOR_REVIEW&filter[platform]=IOS`)).data[0];
+  const sub = open ?? (await api('POST', '/v1/reviewSubmissions', { data: { type: 'reviewSubmissions', attributes: { platform: 'IOS' }, relationships: { app: { data: { type: 'apps', id: a.id } } } } })).data;
+  const items = (await api('GET', `/v1/reviewSubmissions/${sub.id}/items`)).data;
+  if (!items.length) await api('POST', '/v1/reviewSubmissionItems', { data: { type: 'reviewSubmissionItems', relationships: { reviewSubmission: { data: { type: 'reviewSubmissions', id: sub.id } }, appStoreVersion: { data: { type: 'appStoreVersions', id: ver.id } } } } });
   const done = await api('PATCH', `/v1/reviewSubmissions/${sub.id}`, { data: { type: 'reviewSubmissions', id: sub.id, attributes: { submitted: true } } });
   console.log('submitted:', done.data.attributes.state);
 };
