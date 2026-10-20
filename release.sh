@@ -15,9 +15,11 @@ TEAM="$(sed -n 's/^DEVELOPMENT_TEAM *= *//p' Local.xcconfig 2>/dev/null | head -
 ARCHIVE=build/Tele.xcarchive
 EXPORT=build/export
 
-auth=()
+auth=""
+tool_auth=""
 if [[ -n "${ASC_KEY_ID:-}" ]]; then
-  auth=(-authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" -authenticationKeyPath "$ASC_KEY_PATH")
+  auth="-authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID -authenticationKeyPath $ASC_KEY_PATH"
+  tool_auth="--apiKey $ASC_KEY_ID --apiIssuer $ASC_ISSUER_ID"
 fi
 
 export_options() {
@@ -40,7 +42,7 @@ case "${1:-archive}" in
     [[ -d Tele.xcodeproj ]] || ./generate.sh
     rm -rf "$ARCHIVE"
     xcodebuild archive -project Tele.xcodeproj -scheme Tele -configuration Release \
-      -destination 'generic/platform=iOS' -archivePath "$ARCHIVE" -allowProvisioningUpdates "${auth[@]}" \
+      -destination 'generic/platform=iOS' -archivePath "$ARCHIVE" -allowProvisioningUpdates $auth \
       | grep -E "error|warning: .*sign|ARCHIVE (SUCCEEDED|FAILED)" || true
     [[ -d "$ARCHIVE" ]] && echo "Archive at $ARCHIVE"
     ;;
@@ -50,8 +52,8 @@ case "${1:-archive}" in
     if [[ "$1" == upload ]]; then export_options upload; else export_options export; fi
     rm -rf "$EXPORT"
     xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist build/ExportOptions.plist \
-      -exportPath "$EXPORT" -allowProvisioningUpdates "${auth[@]}"
-    [[ "$1" == validate ]] && xcrun altool --validate-app -f "$EXPORT"/*.ipa -t ios "${auth[@]:+--apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"}"
+      -exportPath "$EXPORT" -allowProvisioningUpdates $auth
+    [[ "$1" == validate ]] && xcrun altool --validate-app -f "$EXPORT"/*.ipa -t ios $tool_auth
     ;;
   *) echo "usage: ./release.sh archive|upload|validate" >&2; exit 1 ;;
 esac
