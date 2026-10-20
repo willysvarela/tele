@@ -22,23 +22,40 @@ enum RemoteKey: String, AppEnum {
 }
 
 /// Apps worth one tap. Store IDs launch with DEEP_LINK; Tizen IDs (with a dot) with NATIVE_LAUNCH.
+/// `tvHome` is the TV's own Home screen, reached with a key press rather than a launch.
 enum TVApp: String, AppEnum, CaseIterable {
-    case launcher, netflix, youtube, primeVideo, disneyPlus, hboMax, spotify, globoplay
+    case launcher, tvHome, netflix, youtube, primeVideo, disneyPlus, hboMax, appleTV, spotify, globoplay
+
+    enum Target {
+        case app(id: String, native: Bool)
+        case key(RemoteKey)
+    }
+
+    /// Tiles on the remote screen. The launcher is not one of them (the Home key opens it) and Globoplay stays
+    /// available to Shortcuts only.
+    static let tiles: [TVApp] = [.tvHome, .netflix, .youtube, .primeVideo, .disneyPlus, .hboMax, .appleTV, .spotify]
 
     static var typeDisplayRepresentation = TypeDisplayRepresentation(name: "TV app")
     static var caseDisplayRepresentations: [TVApp: DisplayRepresentation] = [
-        .launcher: "Launcher", .netflix: "Netflix", .youtube: "YouTube", .primeVideo: "Prime Video",
-        .disneyPlus: "Disney+", .hboMax: "HBO Max", .spotify: "Spotify", .globoplay: "Globoplay"
+        .launcher: "Launcher", .tvHome: "TV Home", .netflix: "Netflix", .youtube: "YouTube",
+        .primeVideo: "Prime Video", .disneyPlus: "Disney+", .hboMax: "HBO Max", .appleTV: "Apple TV",
+        .spotify: "Spotify", .globoplay: "Globoplay"
     ]
+
+    var target: Target {
+        self == .tvHome ? .key(.home) : .app(id: appId, native: isTizenId)
+    }
 
     var title: String {
         switch self {
         case .launcher: return "Launcher"
+        case .tvHome: return "TV Home"
         case .netflix: return "Netflix"
         case .youtube: return "YouTube"
         case .primeVideo: return "Prime Video"
         case .disneyPlus: return "Disney+"
         case .hboMax: return "HBO Max"
+        case .appleTV: return "Apple TV"
         case .spotify: return "Spotify"
         case .globoplay: return "Globoplay"
         }
@@ -47,11 +64,13 @@ enum TVApp: String, AppEnum, CaseIterable {
     var appId: String {
         switch self {
         case .launcher: return "MinLaunchr.Launcher"
+        case .tvHome: return ""
         case .netflix: return "3201907018807"
         case .youtube: return "111299001912"
         case .primeVideo: return "3201910019365"
         case .disneyPlus: return "3201901017640"
         case .hboMax: return "3202301029760"
+        case .appleTV: return "3201807016597"
         case .spotify: return "3201606009684"
         case .globoplay: return "LnLzvqrcEY.globo"
         }
@@ -62,11 +81,13 @@ enum TVApp: String, AppEnum, CaseIterable {
     var symbol: String {
         switch self {
         case .launcher: return "square.grid.2x2.fill"
+        case .tvHome: return "tv.fill"
         case .netflix: return "n.square.fill"
         case .youtube: return "play.rectangle.fill"
         case .primeVideo: return "p.square.fill"
         case .disneyPlus: return "sparkles.tv.fill"
         case .hboMax: return "m.square.fill"
+        case .appleTV: return "appletv.fill"
         case .spotify: return "music.note"
         case .globoplay: return "g.square.fill"
         }

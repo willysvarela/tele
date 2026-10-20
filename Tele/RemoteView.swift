@@ -7,6 +7,7 @@ import SwiftUI
 struct RemoteView: View {
     @EnvironmentObject private var model: RemoteModel
     @State private var showSettings = false
+    @State private var showDevices = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,14 +21,23 @@ struct RemoteView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.canvas.ignoresSafeArea())
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showDevices) { DevicesView() }
         .task { await model.connect() }
     }
 
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(model.config.name.isEmpty ? "Samsung TV" : model.config.name)
-                    .font(.title2.weight(.semibold)).lineLimit(1)
+                Button { showDevices = true } label: {
+                    HStack(spacing: 7) {
+                        Text(model.config.name.isEmpty ? "Samsung TV" : model.config.name)
+                            .font(.title2.weight(.semibold)).lineLimit(1)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Devices")
                 HStack(spacing: 6) {
                     Circle().fill(statusColor).frame(width: 7, height: 7)
                     Text(statusText).font(.subheadline).foregroundStyle(.secondary)
@@ -80,7 +90,7 @@ struct RemoteView: View {
     private var navigation: some View {
         HStack(spacing: 16) {
             RoundKey("arrow.uturn.backward", label: "Back") { model.press(.back) }
-            RoundKey("house.fill", label: "Home") { model.press(.home) }
+            RoundKey("house.fill", label: "Home") { model.home() }
             RoundKey("rectangle.inset.filled.and.person.filled", label: "Source") { model.press(.source) }
         }
     }
@@ -364,7 +374,7 @@ struct AppGrid: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(TVApp.allCases, id: \.self) { app in
+            ForEach(TVApp.tiles, id: \.self) { app in
                 Button { model.launch(app) } label: {
                     VStack(spacing: 7) {
                         AppMark(app: app).aspectRatio(1, contentMode: .fit)
@@ -399,11 +409,13 @@ struct AppMark: View {
         }
         switch app {
         case .launcher: return vertical(0xF5F5F7, 0xD6D6DC)
+        case .tvHome: return vertical(0x1F44C8, 0x10266E)
         case .netflix: return vertical(0xE50914, 0xA80710)
         case .youtube: return AnyShapeStyle(rgb(0xFF0000))
         case .primeVideo: return AnyShapeStyle(rgb(0x00A8E1))
         case .disneyPlus: return vertical(0x1A3BA6, 0x071A52)
         case .hboMax: return vertical(0x2A1F8F, 0x120C4D)
+        case .appleTV: return vertical(0x3A3A3C, 0x0A0A0A)
         case .spotify: return AnyShapeStyle(rgb(0x1DB954))
         case .globoplay: return AnyShapeStyle(LinearGradient(colors: [rgb(0xFF2D55), rgb(0xFF7A00)],
                                                              startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -413,11 +425,16 @@ struct AppMark: View {
     @ViewBuilder private var mark: some View {
         switch app {
         case .launcher: Image(systemName: "square.grid.2x2.fill").font(.system(size: 26, weight: .semibold)).foregroundStyle(.black)
+        case .tvHome: Image(systemName: "tv.fill").font(.system(size: 26, weight: .semibold)).foregroundStyle(.white)
         case .netflix: Text("N").font(.system(size: 36, weight: .black)).foregroundStyle(.white)
         case .youtube: Image(systemName: "play.rectangle.fill").font(.system(size: 30)).foregroundStyle(.white)
         case .primeVideo: Text("prime").font(.system(size: 16, weight: .bold)).foregroundStyle(.white)
         case .disneyPlus: Text("D+").font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundStyle(.white)
         case .hboMax: Text("HBO").font(.system(size: 17, weight: .black)).foregroundStyle(.white)
+        case .appleTV: HStack(spacing: 3) {
+            Image(systemName: "apple.logo").font(.system(size: 20, weight: .medium))
+            Text("tv").font(.system(size: 24, weight: .semibold))
+        }.foregroundStyle(.white)
         case .spotify: Image(systemName: "music.note").font(.system(size: 26, weight: .bold)).foregroundStyle(.black)
         case .globoplay: Image(systemName: "play.fill").font(.system(size: 26)).foregroundStyle(.white)
         }

@@ -80,6 +80,22 @@ final class SamsungTV: NSObject, URLSessionDelegate, URLSessionWebSocketDelegate
         }
     }
 
+    /// Whether the TV lists an app with this id (store id or Tizen id).
+    func isInstalled(appId: String) async -> Bool {
+        var request = URLRequest(url: URL(string: "http://\(host):8001/api/v2/applications/\(appId)")!)
+        request.timeoutInterval = 3
+        guard let (_, response) = try? await session.data(for: request) else { return false }
+        return (response as? HTTPURLResponse)?.statusCode == 200
+    }
+
+    /// Runs a tile: an app launch, or a key press for the TV's own Home screen.
+    func open(_ app: TVApp) async throws {
+        switch app.target {
+        case .key(let key): try await press(key.rawValue)
+        case .app(let id, let native): try await launch(appId: id, native: native)
+        }
+    }
+
     // MARK: DIAL deep links (Netflix "m=<id>", YouTube "v=<id>", ...)
 
     func dial(app: String, payload: String) async throws {

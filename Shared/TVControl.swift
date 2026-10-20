@@ -19,6 +19,7 @@ enum TVControl {
     }
 
     static func launch(_ app: TVApp) async throws {
+        if case .key(let key) = app.target { try await press(key.rawValue); return }
         let config = TVStore.load()
         guard config.isConfigured else { throw TVError.notConfigured }
         let tv = SamsungTV(host: config.host, token: config.token)

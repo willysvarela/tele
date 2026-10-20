@@ -20,8 +20,13 @@ struct ContentView: View {
 
 // MARK: - Setup
 
+/// Finds TVs on the Wi-Fi and pairs with the chosen one. Shown full screen for the first TV and as a sheet
+/// ("Add a TV") for the next ones.
 struct SetupView: View {
+    var embedded = false
+
     @EnvironmentObject private var model: RemoteModel
+    @Environment(\.dismiss) private var dismiss
     @State private var host = TVStore.suggestedHost
     @State private var found: [DiscoveredTV] = []
     @State private var scanning = false
@@ -30,18 +35,37 @@ struct SetupView: View {
     private var busy: Bool { model.state == .connecting || model.state == .pairing }
 
     var body: some View {
+        if embedded {
+            NavigationStack {
+                content
+                    .navigationTitle("Add a TV")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+            }
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         ScrollView {
             VStack(spacing: 22) {
-                Image(systemName: "tv").font(.system(size: 56, weight: .light)).padding(.top, 56)
-                Text("Tele").font(.largeTitle.weight(.semibold))
-                Text("Pick your Samsung TV. It will ask you to allow Tele once.")
-                    .multilineTextAlignment(.center).foregroundStyle(.secondary).padding(.horizontal, 32)
+                if embedded {
+                    Text("Pick the TV to add. It will ask you to allow Tele once.")
+                        .multilineTextAlignment(.center).foregroundStyle(.secondary)
+                        .padding(.horizontal, 32).padding(.top, 24)
+                } else {
+                    Image(systemName: "tv").font(.system(size: 56, weight: .light)).padding(.top, 56)
+                    Text("Tele").font(.largeTitle.weight(.semibold))
+                    Text("Pick your Samsung TV. It will ask you to allow Tele once.")
+                        .multilineTextAlignment(.center).foregroundStyle(.secondary).padding(.horizontal, 32)
+                }
 
                 VStack(spacing: 10) {
                     ForEach(found) { tv in
                         Button {
                             host = tv.host
-                            Task { await model.setup(host: tv.host) }
+                            Task { await add(tv.host) }
                         } label: {
                             HStack(spacing: 14) {
                                 Image(systemName: "tv").font(.title2)
@@ -77,13 +101,13 @@ struct SetupView: View {
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
                     .submitLabel(.go)
-                    .onSubmit { connect() }
+                    .onSubmit { Task { await add(host) } }
                     .textFieldStyle(.roundedBorder)
                     .multilineTextAlignment(.center)
                     .font(.title3.monospacedDigit())
                     .padding(.horizontal, 48)
                 Button {
-                    connect()
+                    Task { await add(host) }
                 } label: {
                     Group {
                         if busy { ProgressView().tint(.black) } else { Text("Connect") }
@@ -102,8 +126,10 @@ struct SetupView: View {
         .task { await scan() }
     }
 
-    private func connect() {
-        Task { await model.setup(host: host) }
+    private func add(_ host: String) async {
+        await model.setup(host: host)
+        if embedded, case .failed = model.state { return }
+        if embedded { dismiss() }
     }
 
     private func scan() async {
@@ -118,6 +144,67 @@ struct SetupView: View {
         }
         scanning = false
         scanned = true
+    }
+}
+
+// MARK: - Devices
+
+/// Every TV the app knows: tap one to use it, swipe for default and remove, add another.
+struct DevicesView: View {
+    @EnvironmentObject private var model: RemoteModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var adding = false
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    ForEach(model.devices) { device in
+                        Button {
+                            model.use(device)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "tv").font(.title3).foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(device.name.isEmpty ? device.host : device.name).font(.headline)
+                                    Text("\(device.model)   \(device.host)").font(.footnote).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                if device.id == model.defaultID {
+                                    Text("Default").font(.caption.weight(.medium)).foregroundStyle(.secondary)
+                                        .padding(.horizontal, 8).padding(.vertical, 3)
+                                        .background(.white.opacity(0.1), in: Capsule())
+                                }
+                                if device.id == model.config.id {
+                                    Image(systemName: "checkmark").font(.body.weight(.semibold))
+                                }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) { model.remove(device) } label: { Label("Remove", systemImage: "trash") }
+                            if device.id != model.defaultID {
+                                Button { model.makeDefault(device) } label: { Label("Default", systemImage: "star") }.tint(.blue)
+                            }
+                        }
+                        .contextMenu {
+                            if device.id != model.defaultID { Button("Make default") { model.makeDefault(device) } }
+                            Button("Remove", role: .destructive) { model.remove(device) }
+                        }
+                    }
+                } footer: {
+                    Text("Tele opens on the default TV. The widget, Control Center and Shortcuts use it too.")
+                }
+                Section {
+                    Button { adding = true } label: { Label("Add a TV", systemImage: "plus") }
+                }
+            }
+            .navigationTitle("Devices")
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .sheet(isPresented: $adding) { SetupView(embedded: true) }
+        }
     }
 }
 
@@ -136,6 +223,7 @@ struct SettingsView: View {
                     LabeledContent("Address", value: model.config.host)
                     LabeledContent("MAC", value: model.config.mac)
                     LabeledContent("Paired", value: model.config.isPaired ? "Yes" : "No")
+                    LabeledContent("Tele launcher", value: model.hasLauncher ? "Installed" : "Not found")
                 }
                 Section {
                     Button("Pair again") { model.config.token = ""; TVStore.save(model.config); Task { await model.connect() }; dismiss() }

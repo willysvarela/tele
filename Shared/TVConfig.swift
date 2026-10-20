@@ -1,34 +1,48 @@
 import Foundation
 
-/// What the app and the widget share about the TV. Lives in the App Group so widget intents can act without the app.
-struct TVConfig: Codable, Equatable {
+/// One TV. The list of TVs and the default live in the App Group so widget intents can act without the app.
+struct TVConfig: Codable, Equatable, Identifiable {
     var host = ""
     var name = ""
     var model = ""
     var mac = ""
     var token = ""
 
+    var id: String { mac.isEmpty ? host : mac }
     var isConfigured: Bool { !host.isEmpty }
     var isPaired: Bool { !token.isEmpty }
 }
 
 enum TVStore {
     static let suite = "group.com.willys.tele"
-    private static let key = "tv.config"
+    private static let devicesKey = "tv.devices"
+    private static let defaultKey = "tv.default"
+    private static let legacyKey = "tv.config"
 
     static var defaults: UserDefaults { UserDefaults(suiteName: suite) ?? .standard }
 
-    static func load() -> TVConfig {
-        if let data = defaults.data(forKey: key),
-           let config = try? JSONDecoder().decode(TVConfig.self, from: data) { return config }
+    /// Every TV the app knows, in the order they were added.
+    static func devices() -> [TVConfig] {
+        if let data = defaults.data(forKey: devicesKey),
+           let list = try? JSONDecoder().decode([TVConfig].self, from: data) { return list }
+        // One-time move from the single-TV layout.
+        if let data = defaults.data(forKey: legacyKey),
+           let one = try? JSONDecoder().decode(TVConfig.self, from: data), one.isConfigured {
+            saveAll([one])
+            setDefault(one.id)
+            defaults.removeObject(forKey: legacyKey)
+            return [one]
+        }
         #if DEBUG
-        // Simulator convenience: `xcrun simctl launch --setenv`-style, via SIMCTL_CHILD_TELE_HOST=<ip>.
+        // Simulator convenience: SIMCTL_CHILD_TELE_HOST=<ip> stands in for a stored TV.
         if let host = ProcessInfo.processInfo.environment["TELE_HOST"], !host.isEmpty {
-            return TVConfig(host: host, name: "Samsung TV")
+            return [TVConfig(host: host, name: "Samsung TV")]
         }
         #endif
-        return TVConfig()
+        return []
     }
+
+    static func defaultID() -> String? { defaults.string(forKey: defaultKey) }
 
     /// What the setup screen pre-fills: `TeleDefaultHost` from Info.plist (TELE_DEFAULT_HOST in Local.xcconfig),
     /// otherwise the phone's own subnet so only the last number is left to type.
@@ -37,7 +51,38 @@ enum TVStore {
         return TVDiscovery.wifiAddress()?.prefix ?? ""
     }
 
+    static func setDefault(_ id: String) { defaults.set(id, forKey: defaultKey) }
+
+    /// The TV the app opens on and the widget, Control Center and Shortcuts act on: the default, else the first.
+    static func load() -> TVConfig {
+        let list = devices()
+        if let id = defaultID(), let device = list.first(where: { $0.id == id }) { return device }
+        return list.first ?? TVConfig()
+    }
+
+    /// Adds the TV or updates the stored one with the same identity. The first TV becomes the default.
     static func save(_ config: TVConfig) {
-        if let data = try? JSONEncoder().encode(config) { defaults.set(data, forKey: key) }
+        var list = devices()
+        if let index = list.firstIndex(where: { $0.id == config.id || $0.host == config.host }) {
+            list[index] = config
+        } else {
+            list.append(config)
+        }
+        saveAll(list)
+        if let id = defaultID(), list.contains(where: { $0.id == id }) { return }
+        setDefault(config.id)
+    }
+
+    static func remove(id: String) {
+        var list = devices()
+        list.removeAll { $0.id == id }
+        saveAll(list)
+        if defaultID() == id {
+            if let first = list.first { setDefault(first.id) } else { defaults.removeObject(forKey: defaultKey) }
+        }
+    }
+
+    private static func saveAll(_ list: [TVConfig]) {
+        if let data = try? JSONEncoder().encode(list) { defaults.set(data, forKey: devicesKey) }
     }
 }

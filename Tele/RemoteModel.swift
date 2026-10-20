@@ -8,9 +8,13 @@ final class RemoteModel: ObservableObject {
     enum State: Equatable { case idle, connecting, pairing, ready, failed(String) }
 
     @Published var config = TVStore.load()
+    @Published var devices = TVStore.devices()
+    @Published var defaultID = TVStore.defaultID()
     @Published var state: State = .idle
     @Published var isOn: Bool?
     @Published var busy = false
+    /// Whether this TV has the Tele launcher installed; decides what the Home key opens.
+    @Published var hasLauncher = false
 
     private var tv: SamsungTV?
     private var connecting: Task<Void, Never>?
@@ -25,21 +29,53 @@ final class RemoteModel: ObservableObject {
         let probe = SamsungTV(host: host)
         do {
             let info = try await probe.info(timeout: 4)
+            let mac = info.device.wifiMac ?? ""
+            let known = devices.first { (!mac.isEmpty && $0.mac == mac) || $0.host == host }
+            disconnect()
             config = TVConfig(host: host, name: info.device.displayName, model: info.device.modelName,
-                              mac: info.device.wifiMac ?? config.mac, token: "")
+                              mac: mac, token: known?.token ?? "")
             TVStore.save(config)
+            reloadDevices()
             await connect()
         } catch {
             state = .failed("No Samsung TV answered at \(host).")
         }
     }
 
-    func forget() {
+    // MARK: devices
+
+    func use(_ device: TVConfig) {
+        guard device.id != config.id else { return }
         disconnect()
-        config = TVConfig()
-        TVStore.save(config)
         state = .idle
         isOn = nil
+        hasLauncher = false
+        config = device
+        Task { await connect() }
+    }
+
+    func makeDefault(_ device: TVConfig) {
+        TVStore.setDefault(device.id)
+        reloadDevices()
+    }
+
+    func remove(_ device: TVConfig) {
+        TVStore.remove(id: device.id)
+        reloadDevices()
+        guard device.id == config.id else { return }
+        disconnect()
+        state = .idle
+        isOn = nil
+        hasLauncher = false
+        config = TVStore.load()
+        if config.isConfigured { Task { await connect() } }
+    }
+
+    func forget() { remove(config) }
+
+    private func reloadDevices() {
+        devices = TVStore.devices()
+        defaultID = TVStore.defaultID()
     }
 
     // MARK: session
@@ -84,8 +120,10 @@ final class RemoteModel: ObservableObject {
 
     func refreshStatus() async {
         guard config.isConfigured else { return }
-        let info = try? await SamsungTV(host: config.host, token: config.token).info(timeout: 2)
+        let probe = SamsungTV(host: config.host, token: config.token)
+        let info = try? await probe.info(timeout: 2)
         isOn = info?.isOn
+        if info != nil { hasLauncher = await probe.isInstalled(appId: TVApp.launcher.appId) }
         if let name = info?.device.displayName, name != config.name { config.name = name; TVStore.save(config) }
     }
 
@@ -98,7 +136,19 @@ final class RemoteModel: ObservableObject {
 
     func launch(_ app: TVApp) {
         haptic()
-        Task { await run { tv in try await tv.launch(appId: app.appId, native: app.isTizenId) } }
+        Task { await run { tv in try await tv.open(app) } }
+    }
+
+    /// Home opens the Tele launcher when the TV has it, otherwise the TV's own Home screen.
+    func home() {
+        haptic()
+        let launcher = hasLauncher
+        Task {
+            await run { tv in
+                if launcher { try await tv.launch(appId: TVApp.launcher.appId, native: true) }
+                else { try await tv.press(RemoteKey.home.rawValue) }
+            }
+        }
     }
 
     func power() {

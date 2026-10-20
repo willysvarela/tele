@@ -6,12 +6,14 @@ Companion to the [tizen-launcher](https://github.com/willysvarela/tizen-launcher
 
 ## What it does
 
-- **Remote**: a fixed, non-scrolling instrument. All apps in a grid at the top (Launcher, Netflix,
-  YouTube, Prime Video, Disney+, HBO Max, Spotify, Globoplay), playback and Back/Home/Source in the
-  middle, and in the thumb's reach at the bottom a navigation disc with OK, flanked by volume and
-  channel rockers whose middle press mutes or opens the guide. Keys fire on touch-down and arrows
-  and volume repeat while held. Keys go over the TV's remote channel, so there is no cloud and no
-  account.
+- **Remote**: a fixed, non-scrolling instrument. App tiles at the top (TV Home, Netflix, YouTube,
+  Prime Video, Disney+, HBO Max, Apple TV, Spotify), playback and Back/Home/Source in the middle,
+  and in the thumb's reach at the bottom a navigation disc with OK, flanked by volume and channel
+  rockers whose middle press mutes or opens the guide. Keys fire on touch-down and arrows and
+  volume repeat while held. Home opens the Tele launcher when the TV has it, otherwise the TV's own
+  Home screen. Keys go over the TV's remote channel, so there is no cloud and no account.
+- **Several TVs**: tap the TV name to switch, add or remove TVs and choose the default one, which
+  the app opens on and the widget, Control Center and Shortcuts act on.
 - **Widget** (small and medium): power, mute, volume, play, and app shortcuts that work without
   opening the app. The dot shows whether the TV is on.
 - **Control Center** (iOS 18): TV power, Mute, Open launcher.
@@ -60,7 +62,9 @@ The widget comes with the app: long-press the Home Screen, add *Tele*. Controls 
 Control Center editor under *Tele*.
 
 Layout: `Shared/` is compiled into both targets (TV client, config store, intents),
-`Tele/` is the app, `TeleWidget/` the widget and controls.
+`Tele/` is the app, `TeleWidget/` the widget and controls. The app icon is drawn in
+`tools/icon.html`; render it with headless Chrome at 1024x1024 into
+`Tele/Assets.xcassets/AppIcon.appiconset/icon.png`.
 
 ## Notes
 
