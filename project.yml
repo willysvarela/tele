@@ -41,10 +41,10 @@ targets:
     entitlements:
       path: Tele/Tele.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.willysvarela.tele.shared]
+        com.apple.security.application-groups: [group.com.willysvarela.teleremote]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.tele
+        PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.teleremote
     dependencies:
       - target: TeleWidget
         embed: true
@@ -69,8 +69,8 @@ targets:
     entitlements:
       path: TeleWidget/TeleWidget.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.willysvarela.tele.shared]
+        com.apple.security.application-groups: [group.com.willysvarela.teleremote]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.tele.widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.teleremote.widget
         SKIP_INSTALL: true
