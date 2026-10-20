@@ -235,6 +235,14 @@ commands.attachBuild = async (number) => {
   throw new Error('build not valid after 9 minutes');
 };
 
+commands.uploads = async () => {
+  const a = (await app()).data[0];
+  const show = async (label, path) => { try { const j = await api('GET', path); console.log('##', label); for (const d of j.data ?? []) console.log(JSON.stringify({ id: d.id, ...d.attributes }).slice(0, 700)); if (!j.data?.length) console.log('(none)'); } catch (e) { console.log('##', label, 'ERR', e.message.slice(0, 300)); } };
+  await show('buildUploads', `/v1/apps/${a.id}/buildUploads?limit=10`);
+  await show('preReleaseVersions', `/v1/preReleaseVersions?filter[app]=${a.id}`);
+  await show('builds (all)', `/v1/builds?filter[app]=${a.id}&limit=10&sort=-uploadedDate`);
+};
+
 commands.contact = async (first, last, email, phone) => {
   const r = await app(); const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
   const d = (await api('GET', `/v1/appStoreVersions/${ver.id}/appStoreReviewDetail`)).data;
