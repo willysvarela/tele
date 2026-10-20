@@ -4,6 +4,9 @@ options:
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
+configFiles:
+  Debug: Local.xcconfig
+  Release: Local.xcconfig
 settings:
   base:
     SWIFT_VERSION: "5.0"

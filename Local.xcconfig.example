@@ -1,0 +1,4 @@
+// Copy this file to Local.xcconfig (ignored by git) and set your Apple team ID so
+// ./generate.sh keeps signing configured. The ID is in Xcode > Settings > Accounts
+// (select the team) or at developer.apple.com/account under Membership details.
+DEVELOPMENT_TEAM = ABCDE12345

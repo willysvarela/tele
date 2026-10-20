@@ -36,9 +36,23 @@ brew install xcodegen
 ./generate.sh open      # writes Tele.xcodeproj and opens it
 ```
 
-In Xcode pick your team under *Signing & Capabilities* for both targets (Tele and TeleWidget);
-the App Group `group.com.willys.tele` is created on first signing. Run on an iPhone on the same
-Wi-Fi as the TV, enter the TV's IP, and accept the prompt on the TV.
+### Run on your iPhone
+
+A free Apple ID is enough (App Groups are allowed on free teams; the app just has to be
+reinstalled from Xcode every 7 days).
+
+1. Xcode > Settings > Accounts: add your Apple ID. Xcode creates the development certificate.
+2. Copy `Local.xcconfig.example` to `Local.xcconfig` and set `DEVELOPMENT_TEAM` to the team ID
+   shown next to the account, then `./generate.sh open`. (Or pick the team under *Signing &
+   Capabilities* for both targets, Tele and TeleWidget; that choice is lost on regeneration.)
+3. Plug the iPhone in, unlock it, tap *Trust*, and turn on *Settings > Privacy & Security >
+   Developer Mode* if asked. After the first cable run Xcode can install over Wi-Fi.
+4. Pick the iPhone in the scheme bar and press Run. On the phone, allow the app under
+   *Settings > General > VPN & Device Management* the first time, then open it.
+5. Accept the *Local Network* prompt, enter the TV's IP, and accept "Allow Tele" on the TV.
+
+The widget comes with the app: long-press the Home Screen, add *Tele*. Controls appear in the
+Control Center editor under *Tele*.
 
 Layout: `Shared/` is compiled into both targets (TV client, config store, intents),
 `Tele/` is the app, `TeleWidget/` the widget and controls.
