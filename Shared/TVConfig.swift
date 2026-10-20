@@ -14,7 +14,7 @@ struct TVConfig: Codable, Equatable, Identifiable {
 }
 
 enum TVStore {
-    static let suite = "group.com.willysvarela.tele"
+    static let suite = "group.com.willysvarela.tele.shared"
     private static let devicesKey = "tv.devices"
     private static let defaultKey = "tv.default"
     private static let legacyKey = "tv.config"

@@ -41,7 +41,7 @@ targets:
     entitlements:
       path: Tele/Tele.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.willysvarela.tele]
+        com.apple.security.application-groups: [group.com.willysvarela.tele.shared]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.tele
@@ -69,7 +69,7 @@ targets:
     entitlements:
       path: TeleWidget/TeleWidget.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.willysvarela.tele]
+        com.apple.security.application-groups: [group.com.willysvarela.tele.shared]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.willysvarela.tele.widget

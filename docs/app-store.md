@@ -6,7 +6,7 @@
    Apple ID from the one that first signed the app. The free Personal Team had registered
    `com.willys.tele` and its App Group, which no other team may reuse, so the app now uses the
    prefix `com.willysvarela` (`com.willysvarela.tele`, `com.willysvarela.tele.widget`,
-   `group.com.willysvarela.tele`). Never build for a device with the Personal Team selected
+   `group.com.willysvarela.tele.shared`). Never build for a device with the Personal Team selected
    again, or these ids get stuck there too.
 2. In Xcode > Settings > Accounts, pick the new team; put its team id in `Local.xcconfig`.
 3. In App Store Connect create the app: platform iOS, bundle id `com.willysvarela.tele`, SKU `tele`.
