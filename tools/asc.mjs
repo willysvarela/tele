@@ -220,6 +220,21 @@ commands.setPrice = async (customerPrice, territory = 'USA') => {
   console.log('price set to', customerPrice, territory, '(other territories follow Apple\'s equalisation)');
 };
 
+commands.attachBuild = async (number) => {
+  const r = await app(); const a = r.data[0]; const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
+  for (let i = 0; i < 54; i++) {
+    const builds = (await api('GET', `/v1/builds?filter[app]=${a.id}&sort=-uploadedDate&limit=5`)).data;
+    const b = builds.find(x => !number || x.attributes.version === number);
+    if (b && b.attributes.processingState === 'VALID') {
+      await api('PATCH', `/v1/appStoreVersions/${ver.id}/relationships/build`, { data: { type: 'builds', id: b.id } });
+      console.log(`attached build ${b.attributes.version}`); return;
+    }
+    console.log(`build ${number ?? 'latest'}: ${b ? b.attributes.processingState : 'not listed yet'}, waiting…`);
+    await new Promise(res => setTimeout(res, 10000));
+  }
+  throw new Error('build not valid after 9 minutes');
+};
+
 commands.contact = async (first, last, email, phone) => {
   const r = await app(); const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
   const d = (await api('GET', `/v1/appStoreVersions/${ver.id}/appStoreReviewDetail`)).data;
