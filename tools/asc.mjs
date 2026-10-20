@@ -184,6 +184,12 @@ commands.screenshotState = async () => {
   }
 };
 
+commands.availabilityState = async () => {
+  const a = (await app()).data[0];
+  const r = await api('GET', `/v1/apps/${a.id}/appAvailabilityV2?include=territoryAvailabilities&limit[territoryAvailabilities]=200`);
+  console.log('availableInNewTerritories', r.data.attributes.availableInNewTerritories, 'available territories', (r.included ?? []).filter(t => t.attributes.available).length);
+};
+
 commands.contact = async (first, last, email, phone) => {
   const r = await app(); const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
   const d = (await api('GET', `/v1/appStoreVersions/${ver.id}/appStoreReviewDetail`)).data;
