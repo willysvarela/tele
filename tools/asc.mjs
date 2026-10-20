@@ -243,6 +243,14 @@ commands.uploads = async () => {
   await show('builds (all)', `/v1/builds?filter[app]=${a.id}&limit=10&sort=-uploadedDate`);
 };
 
+commands.territory = async (code = 'BRA') => {
+  const a = (await app()).data[0];
+  const av = (await api('GET', `/v1/apps/${a.id}/appAvailabilityV2`)).data;
+  let url = `/v2/appAvailabilities/${av.id}/territoryAvailabilities?limit=50&include=territory`, total = 0, hit;
+  while (url) { const r = await api('GET', url); total += r.data.length; hit ??= r.data.find(t => t.relationships?.territory?.data?.id === code); url = r.links?.next; }
+  console.log(code, hit ? `available=${hit.attributes.available} releaseDate=${hit.attributes.releaseDate ?? 'immediate'}` : 'not listed', '| territories listed:', total);
+};
+
 commands.contact = async (first, last, email, phone) => {
   const r = await app(); const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
   const d = (await api('GET', `/v1/appStoreVersions/${ver.id}/appStoreReviewDetail`)).data;
