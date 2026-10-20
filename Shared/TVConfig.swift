@@ -47,7 +47,12 @@ enum TVStore {
         return []
     }
 
-    static func defaultID() -> String? { defaults.string(forKey: defaultKey) }
+    static func defaultID() -> String? {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["TELE_DEMO"] != nil { return "00:00:00:00:00:01" }
+        #endif
+        return defaults.string(forKey: defaultKey)
+    }
 
     /// What the setup screen pre-fills: `TeleDefaultHost` from Info.plist (TELE_DEFAULT_HOST in Local.xcconfig),
     /// otherwise the phone's own subnet so only the last number is left to type.

@@ -14,10 +14,11 @@ xcodebuild -project Tele.xcodeproj -scheme Tele -destination "id=$SIM" -derivedD
 xcrun simctl boot "$SIM" 2>/dev/null || true
 xcrun simctl install "$SIM" build/Build/Products/Debug-iphonesimulator/Tele.app
 xcrun simctl status_bar "$SIM" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
+SIMCTL_CHILD_TELE_DEMO=1 xcrun simctl launch "$SIM" com.willys.tele >/dev/null; sleep 6   # warm up a cold simulator
 shot() {   # shot <file> <TELE_DEMO value>
   xcrun simctl terminate "$SIM" com.willys.tele 2>/dev/null || true
   SIMCTL_CHILD_TELE_DEMO="$2" xcrun simctl launch "$SIM" com.willys.tele >/dev/null
-  sleep 3
+  sleep 4
   xcrun simctl io "$SIM" screenshot "$OUT/$1.png" >/dev/null
   echo "$OUT/$1.png"
 }
