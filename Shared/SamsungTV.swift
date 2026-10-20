@@ -158,7 +158,11 @@ final class SamsungTV: NSObject, URLSessionDelegate, URLSessionWebSocketDelegate
     }
 
     /// Launches an app over the remote channel. Store IDs use DEEP_LINK, Tizen IDs use NATIVE_LAUNCH.
+    /// Opens an app. The REST endpoint needs no channel and is what this firmware honours; the channel's
+    /// ed.apps.launch message is the fallback.
     func launch(appId: String, native: Bool, metaTag: String = "") async throws {
+        if (try? await launchREST(appId: appId)) != nil { return }
+        if channel == nil { try await connect(timeout: 8) }
         try await sendJSON([
             "method": "ms.channel.emit",
             "params": [

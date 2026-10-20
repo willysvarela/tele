@@ -19,7 +19,9 @@ enum TVControl {
     }
 
     static func launch(_ app: TVApp) async throws {
-        let tv = try await connected()
+        let config = TVStore.load()
+        guard config.isConfigured else { throw TVError.notConfigured }
+        let tv = SamsungTV(host: config.host, token: config.token)
         defer { tv.disconnect() }
         try await tv.launch(appId: app.appId, native: app.isTizenId)
         try? await Task.sleep(nanoseconds: 400_000_000)

@@ -51,9 +51,9 @@ enum TVApp: String, AppEnum, CaseIterable {
         case .youtube: return "111299001912"
         case .primeVideo: return "3201910019365"
         case .disneyPlus: return "3201901017640"
-        case .hboMax: return "3201601007230"
+        case .hboMax: return "3202301029760"
         case .spotify: return "3201606009684"
-        case .globoplay: return "org.tizen.globoplayaria"
+        case .globoplay: return "LnLzvqrcEY.globo"
         }
     }
 
