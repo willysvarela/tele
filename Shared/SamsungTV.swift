@@ -231,31 +231,64 @@ final class SamsungTV: NSObject, URLSessionDelegate, URLSessionWebSocketDelegate
         ])
     }
 
-    // MARK: Wake-on-LAN (directed to the TV plus the subnet broadcast)
+    // MARK: Wake-on-LAN
 
-    static func wake(mac: String, host: String) {
+    /// Sends the magic packet three ways: plain unicast to the TV's own address (which iOS allows without the
+    /// multicast entitlement, and which works while the TV keeps its Wi-Fi link up in standby), the subnet
+    /// broadcast and the limited broadcast (both need com.apple.developer.networking.multicast on iOS 16+).
+    /// Returns the errno per target; 0 means the kernel took the packet.
+    @discardableResult
+    static func wake(mac: String, host: String) -> [String: Int32] {
         let bytes = mac.split(whereSeparator: { $0 == ":" || $0 == "-" }).compactMap { UInt8($0, radix: 16) }
-        guard bytes.count == 6 else { return }
+        guard bytes.count == 6 else { return [:] }
         var packet = [UInt8](repeating: 0xFF, count: 6)
         for _ in 0..<16 { packet += bytes }
-        for target in [host, "255.255.255.255"] {
+        var targets = [host]
+        if let prefix = TVDiscovery.wifiAddress()?.prefix { targets.append(prefix + "255") }
+        targets.append("255.255.255.255")
+        var result: [String: Int32] = [:]
+        for target in targets {
             let sock = socket(AF_INET, SOCK_DGRAM, 0)
-            guard sock >= 0 else { continue }
+            guard sock >= 0 else { result[target] = errno; continue }
             var yes: Int32 = 1
             setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &yes, socklen_t(MemoryLayout<Int32>.size))
-            var addr = sockaddr_in()
-            addr.sin_family = sa_family_t(AF_INET)
-            addr.sin_port = in_port_t(9).bigEndian
-            addr.sin_addr.s_addr = inet_addr(target)
-            packet.withUnsafeBytes { raw in
-                withUnsafePointer(to: &addr) { ptr in
-                    ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
-                        _ = sendto(sock, raw.baseAddress, raw.count, 0, sa, socklen_t(MemoryLayout<sockaddr_in>.size))
+            var worst: Int32 = 0
+            for port: in_port_t in [9, 7] {
+                var addr = sockaddr_in()
+                addr.sin_family = sa_family_t(AF_INET)
+                addr.sin_port = port.bigEndian
+                addr.sin_addr.s_addr = inet_addr(target)
+                let sent = packet.withUnsafeBytes { raw in
+                    withUnsafePointer(to: &addr) { ptr in
+                        ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                            sendto(sock, raw.baseAddress, raw.count, 0, sa, socklen_t(MemoryLayout<sockaddr_in>.size))
+                        }
                     }
                 }
+                if sent < 0 { worst = errno }
             }
+            result[target] = worst
             close(sock)
         }
+        #if DEBUG
+        print("wake", mac, result.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: " "))
+        #endif
+        return result
+    }
+
+    /// Wakes the TV and waits until its REST service answers and reports power on. Repeats the magic packet
+    /// every few seconds meanwhile; false when the TV stays silent until the timeout.
+    static func wakeAndWait(mac: String, host: String, timeout: TimeInterval = 30) async -> Bool {
+        let probe = SamsungTV(host: host)
+        let deadline = Date().addingTimeInterval(timeout)
+        var round = 0
+        while Date() < deadline, !Task.isCancelled {
+            if round % 3 == 0 { wake(mac: mac, host: host) }
+            round += 1
+            if let info = try? await probe.info(timeout: 2), info.isOn { return true }
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+        }
+        return false
     }
 }
 

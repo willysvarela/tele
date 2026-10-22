@@ -51,8 +51,8 @@ struct RemoteView: View {
                 }
             }
             Spacer(minLength: 0)
-            RoundKey("power", size: 46, tint: model.isOn == false ? Palette.standby : Palette.live,
-                     label: model.isOn == false ? "Turn the TV on" : "Turn the TV off", fire: .up) { model.power() }
+            RoundKey("power", size: 46, tint: model.looksOff ? Palette.standby : Palette.live,
+                     label: model.looksOff ? "Turn the TV on" : "Turn the TV off", fire: .up) { model.power() }
             Button { showSettings = true } label: {
                 Image(systemName: "gearshape.fill").font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.secondary).frame(width: 46, height: 46)
@@ -66,7 +66,7 @@ struct RemoteView: View {
     private var statusColor: Color {
         switch model.state {
         case .ready: return model.isOn == false ? .orange : Palette.standby
-        case .connecting, .pairing: return .yellow
+        case .connecting, .pairing, .waking: return .yellow
         case .failed: return Palette.live
         case .idle: return .gray
         }
@@ -77,6 +77,7 @@ struct RemoteView: View {
         case .ready: return model.isOn == false ? "Standby" : "Connected"
         case .connecting: return "Connecting"
         case .pairing: return "Allow Tele on the TV"
+        case .waking: return "Waking the TV"
         case .failed: return "Not connected"
         case .idle: return model.config.host
         }

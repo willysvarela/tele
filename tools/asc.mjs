@@ -269,6 +269,18 @@ commands.submit = async () => {
   console.log('submitted:', done.data.attributes.state);
 };
 
+commands.submissions = async () => {
+  const r = await app(); const a = r.data[0];
+  const subs = (await api('GET', `/v1/apps/${a.id}/reviewSubmissions?filter[platform]=IOS&limit=20`)).data;
+  for (const s of subs) {
+    console.log('submission', s.id, s.attributes.state, 'submitted', s.attributes.submittedDate);
+    const items = (await api('GET', `/v1/reviewSubmissions/${s.id}/items?include=appStoreVersion`)).data;
+    for (const it of items) console.log('  item', it.id, it.attributes.state, it.attributes.resolved ? 'resolved' : '', it.attributes.removed ? 'removed' : '');
+  }
+  const ver = (r.included ?? []).find(i => i.type === 'appStoreVersions');
+  console.log('version', ver.attributes.versionString, ver.attributes.appVersionState, 'created', ver.attributes.createdDate);
+};
+
 const [cmd, ...args] = process.argv.slice(2);
 if (!commands[cmd]) { console.error('commands:', Object.keys(commands).join(', ')); process.exit(1); }
 commands[cmd](...args).catch(e => { console.error(e.message); process.exit(1); });

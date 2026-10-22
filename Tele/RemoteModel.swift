@@ -5,7 +5,7 @@ import WidgetKit
 /// Live session for the app: keeps the remote channel open while on screen, so key presses are instant.
 @MainActor
 final class RemoteModel: ObservableObject {
-    enum State: Equatable { case idle, connecting, pairing, ready, failed(String) }
+    enum State: Equatable { case idle, connecting, pairing, waking, ready, failed(String) }
 
     @Published var config = TVStore.load()
     @Published var devices = TVStore.devices()
@@ -15,6 +15,12 @@ final class RemoteModel: ObservableObject {
     @Published var busy = false
     /// Whether this TV has the Tele launcher installed; decides what the Home key opens.
     @Published var hasLauncher = false
+    /// True when the TV reports standby or has stopped answering: the power key should wake it, not toggle it.
+    var looksOff: Bool {
+        if let isOn { return !isOn }
+        if case .failed = state { return true }
+        return false
+    }
 
     private var tv: SamsungTV?
     private var connecting: Task<Void, Never>?
@@ -128,6 +134,7 @@ final class RemoteModel: ObservableObject {
         let probe = SamsungTV(host: config.host, token: config.token)
         let info = try? await probe.info(timeout: 2)
         isOn = info?.isOn
+        if info == nil, case .failed = state { state = .failed("The TV is off, or not on this Wi-Fi.") }
         if info != nil { hasLauncher = await probe.isInstalled(appId: TVApp.launcher.appId) }
         if let name = info?.device.displayName, name != config.name { config.name = name; TVStore.save(config) }
     }
@@ -161,17 +168,36 @@ final class RemoteModel: ObservableObject {
         }
     }
 
+    /// KEY_POWER toggles a TV that answers; one that reports standby or stays silent gets Wake-on-LAN, then
+    /// the session reconnects once it is back.
     func power() {
         haptic()
         Task {
-            if isOn == false {
-                SamsungTV.wake(mac: config.mac, host: config.host)
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if !looksOff, let tv, state == .ready {
+                try? await tv.press(RemoteKey.power.rawValue)
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
                 await refreshStatus()
-            } else {
+                return
+            }
+            let probe = SamsungTV(host: config.host, token: config.token)
+            if let info = try? await probe.info(timeout: 1.5), info.isOn {   // it came back since we last looked
                 await run { tv in try await tv.press(RemoteKey.power.rawValue) }
                 try? await Task.sleep(nanoseconds: 1_500_000_000)
                 await refreshStatus()
+                return
+            }
+            disconnect()
+            state = .waking
+            let awake = await SamsungTV.wakeAndWait(mac: config.mac, host: config.host, timeout: 30)
+            guard state == .waking else { return }
+            if awake {
+                state = .idle
+                try? await Task.sleep(nanoseconds: 1_000_000_000)   // the remote port opens a moment after REST
+                await connect()
+            } else {
+                state = .failed(config.mac.isEmpty
+                    ? "The TV did not answer, and Tele has no MAC address for it. Remove it and add it again while it is on."
+                    : "The TV did not wake up. Make sure \"Power On with Mobile\" is on in its network settings.")
             }
         }
     }
